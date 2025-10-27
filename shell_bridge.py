@@ -54,42 +54,49 @@ class ShellBridge:
                 self.is_running = False
     
     def execute_command(self, command: str) -> Dict[str, str]:
-        """Execute a command in the shell and return results"""
-        if not self.is_running or not self.shell_process:
-            return {"error": "Shell not running"}
+        """Execute a command directly using subprocess (simpler and more reliable)"""
+        if not command or not command.strip():
+            return {
+                "command": "",
+                "output": "",
+                "error": "Empty command",
+                "success": False
+            }
         
         try:
-            # Send command to shell
-            self.shell_process.stdin.write(f"{command}\n")
-            self.shell_process.stdin.flush()
+            # Execute command directly using subprocess
+            print(f"🔧 Executing: {command}")
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=os.getcwd()
+            )
             
-            # Read output with timeout
-            output_lines = []
-            error_lines = []
+            output = result.stdout.strip()
+            error = result.stderr.strip()
+            success = result.returncode == 0
             
-            # Give the shell time to process
-            time.sleep(0.1)
-            
-            # Try to read available output
-            try:
-                # Non-blocking read
-                import select
-                if sys.platform != "win32":  # Unix-like systems
-                    ready, _, _ = select.select([self.shell_process.stdout], [], [], 1.0)
-                    if ready:
-                        output = self.shell_process.stdout.read(4096)
-                        if output:
-                            output_lines = output.strip().split('\n')
-            except:
-                pass
+            print(f"✅ Return code: {result.returncode}")
+            if output:
+                print(f"📤 Output: {output[:200]}")  # Show first 200 chars
             
             return {
                 "command": command,
-                "output": "\n".join(output_lines),
-                "error": "\n".join(error_lines),
-                "success": True
+                "output": output,
+                "error": error,
+                "success": success
             }
             
+        except subprocess.TimeoutExpired:
+            return {
+                "command": command,
+                "output": "",
+                "error": "Command timed out",
+                "success": False
+            }
         except Exception as e:
             return {
                 "command": command,
@@ -126,6 +133,11 @@ class VoiceCommandProcessor:
             # Hindi to English mappings
             "hindi": {
                 "फोल्डर खोलो": "ls",
+                "होल्डर खोलो": "ls",
+                "लिस्ट फाइल्स": "ls",
+                "लिस्ट फाइल": "ls",
+                "फाइल्स दिखाओ": "ls",
+                "फाइल दिखाओ": "ls",
                 "फोल्डर दिखाओ": "ls -la",
                 "वर्तमान फोल्डर": "pwd",
                 "ऊपर जाओ": "cd ..",
@@ -155,16 +167,29 @@ class VoiceCommandProcessor:
             # English command mappings
             "english": {
                 "list files": "ls",
+                "list file": "ls",
+                "show files": "ls",
+                "show file": "ls",
+                "files": "ls",
                 "show directory": "ls -la",
+                "show all files": "ls -la",
                 "current directory": "pwd",
+                "current folder": "pwd",
+                "where am i": "pwd",
                 "go up": "cd ..",
                 "go home": "cd ~",
                 "exit": "exit",
+                "quit": "exit",
                 "create file": "touch newfile.txt",
+                "make file": "touch newfile.txt",
                 "create folder": "mkdir newfolder",
+                "make folder": "mkdir newfolder",
                 "delete file": "rm file.txt",
+                "remove file": "rm file.txt",
                 "delete folder": "rmdir folder",
+                "remove folder": "rmdir folder",
                 "system info": "uname -a",
+                "system information": "uname -a",
                 "show memory": "free -h",
                 "disk space": "df -h",
                 "show processes": "ps aux",
@@ -191,9 +216,11 @@ class VoiceCommandProcessor:
         
         # Map command
         mapped_command = self.map_command(voice_text, language)
+        print(f"🗺️  Mapping: '{voice_text}' ({language}) → '{mapped_command}'")
         
         # Execute command
         result = self.shell_bridge.execute_command(mapped_command)
+        result["mapped_command"] = mapped_command  # Add mapped command to result
         
         # Add to history
         self.command_history.append({
@@ -219,20 +246,34 @@ class VoiceCommandProcessor:
     
     def map_command(self, text: str, language: str) -> str:
         """Map voice text to shell command"""
-        text_lower = text.lower().strip()
+        # Clean the text - remove punctuation and extra spaces
+        import re
+        text_clean = re.sub(r'[!.?।]', '', text).strip().lower()
         
         # Check direct mappings
         if language in self.command_mappings:
-            if text_lower in self.command_mappings[language]:
-                return self.command_mappings[language][text_lower]
+            # Try exact match first
+            if text_clean in self.command_mappings[language]:
+                return self.command_mappings[language][text_clean]
             
-            # Fuzzy matching
+            # Try fuzzy matching
             for voice_cmd, shell_cmd in self.command_mappings[language].items():
-                if voice_cmd in text_lower or text_lower in voice_cmd:
+                voice_cmd_clean = re.sub(r'[!.?।]', '', voice_cmd).lower()
+                if voice_cmd_clean in text_clean or text_clean in voice_cmd_clean:
                     return shell_cmd
+            
+            # Try matching individual words
+            words = text_clean.split()
+            for voice_cmd, shell_cmd in self.command_mappings[language].items():
+                voice_words = voice_cmd.lower().split()
+                if any(word in words for word in voice_words):
+                    # Check if at least 50% of words match
+                    matches = sum(1 for word in voice_words if word in words)
+                    if matches >= len(voice_words) / 2:
+                        return shell_cmd
         
-        # If no mapping found, return original text
-        return text
+        # If no mapping found, return cleaned text
+        return text_clean if text_clean else text
     
     def get_command_history(self) -> List[Dict[str, any]]:
         """Get command execution history"""

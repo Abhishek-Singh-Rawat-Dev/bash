@@ -304,12 +304,17 @@ class EnhancedVoiceShell:
                     language = "hindi"
                     # Translate if needed
                     english_text = self.translate_text(transcript, "hi", "en")
+                    print(f"📝 Original (Hindi): {transcript}")
+                    print(f"🌐 Translated (English): {english_text}")
                 else:
                     language = "english"
                     english_text = transcript
+                    print(f"📝 Command (English): {english_text}")
                 
                 # Execute command using shell bridge
+                print(f"🎯 Language detected: {language}")
                 result = self.command_processor.process_voice_command(transcript, language)
+                print(f"🔧 Mapped command: {result.get('mapped_command', 'N/A')}")
                 
                 # Display results
                 if result.get("success", False):
