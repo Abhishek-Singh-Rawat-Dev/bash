@@ -67,7 +67,38 @@ help:
 	@echo "  test     - Run basic tests"
 	@echo "  install  - Install to /usr/local/bin/"
 	@echo "  uninstall- Remove from /usr/local/bin/"
+	@echo ""
+	@echo "Voice Control (Phase 3):"
+	@echo "  voice-setup   - Setup voice control dependencies"
+	@echo "  voice-install - Install Python voice dependencies"
+	@echo "  voice-test    - Test voice control module"
+	@echo "  voice-demo    - Run interactive voice demo"
+	@echo "  voice-run     - Start voice-controlled shell"
+	@echo ""
 	@echo "  help     - Show this help message"
 
+# Voice control targets
+voice-setup: $(TARGET)
+	@echo "Setting up voice control..."
+	@chmod +x setup_voice.sh
+	@./setup_voice.sh
+
+voice-test: $(TARGET)
+	@echo "Testing voice control..."
+	@python3 test_voice.py
+
+voice-demo: $(TARGET)
+	@echo "Running voice control demo..."
+	@python3 voice_demo.py
+
+voice-run: $(TARGET)
+	@echo "Starting voice-controlled shell..."
+	@python3 voice_enhanced.py
+
+# Install voice dependencies
+voice-install:
+	@echo "Installing voice control dependencies..."
+	@pip3 install -r requirements.txt
+
 # Phony targets
-.PHONY: all clean install uninstall debug release run test help
+.PHONY: all clean install uninstall debug release run test help voice-setup voice-test voice-demo voice-run voice-install

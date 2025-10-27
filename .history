@@ -1,21 +1,13 @@
 pwd
 ls
-echo Hello World
+echo 'Shell is working perfectly!'
+ls | grep .md
 history
 exit
-ls | grep .c
-echo 'Hello World' > test.txt
-cat test.txt
-rm test.txt
-exit
-pwd
-echo 'Hello from mini-bash!'
 pwd
 ls
-echo 'test'
+echo '🔥 Core Shell Working!'
+ls | grep .md
+echo 'Pipeline Test' | wc -w
 history
-ls -la | head -5
-ls | grep .c
-jobs
-echo 'No background jobs yet'
-nonexistent_command
+exit
