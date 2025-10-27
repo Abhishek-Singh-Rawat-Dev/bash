@@ -1,0 +1,21 @@
+pwd
+ls
+echo Hello World
+history
+exit
+ls | grep .c
+echo 'Hello World' > test.txt
+cat test.txt
+rm test.txt
+exit
+pwd
+echo 'Hello from mini-bash!'
+pwd
+ls
+echo 'test'
+history
+ls -la | head -5
+ls | grep .c
+jobs
+echo 'No background jobs yet'
+nonexistent_command
