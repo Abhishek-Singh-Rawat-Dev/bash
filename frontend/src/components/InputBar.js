@@ -5,6 +5,7 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
+  const [executor, setExecutor] = useState('mini-bash'); // 'mini-bash' or 'system-terminal'
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
   const handleSubmit = (commandText = null, isVoice = false) => {
     const command = commandText || input;
     if (command.trim() && !isProcessing) {
-      onCommandSubmit(command, isVoice);
+      onCommandSubmit(command, isVoice, executor);
       setInput('');
     }
   };
@@ -104,6 +105,17 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
       </div>
       
       <div className="input-actions">
+        <select
+          className="executor-dropdown"
+          value={executor}
+          onChange={(e) => setExecutor(e.target.value)}
+          disabled={isProcessing}
+          title="Choose executor"
+        >
+          <option value="mini-bash">💻 Mini-Bash</option>
+          <option value="system-terminal">🖥️ Mac Terminal</option>
+        </select>
+
         <button
           className={`btn-voice ${isRecording ? 'recording' : ''}`}
           onClick={handleVoiceClick}

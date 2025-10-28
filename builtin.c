@@ -127,3 +127,142 @@ int builtin_bg(command_t *cmd) {
     
     return resume_job(job_id, 0); // 0 for background
 }
+
+// Built-in mkdir command
+int builtin_mkdir(command_t *cmd) {
+    if (cmd->argc < 2) {
+        fprintf(stderr, "mkdir: missing operand\n");
+        fprintf(stderr, "Usage: mkdir DIRECTORY...\n");
+        return 1;
+    }
+    
+    int status = 0;
+    for (int i = 1; i < cmd->argc; i++) {
+        if (mkdir(cmd->args[i], 0755) == -1) {
+            fprintf(stderr, "mkdir: cannot create directory '%s': %s\n", 
+                    cmd->args[i], strerror(errno));
+            status = 1;
+        }
+    }
+    return status;
+}
+
+// Built-in rmdir command
+int builtin_rmdir(command_t *cmd) {
+    if (cmd->argc < 2) {
+        fprintf(stderr, "rmdir: missing operand\n");
+        fprintf(stderr, "Usage: rmdir DIRECTORY...\n");
+        return 1;
+    }
+    
+    int status = 0;
+    for (int i = 1; i < cmd->argc; i++) {
+        if (rmdir(cmd->args[i]) == -1) {
+            fprintf(stderr, "rmdir: failed to remove '%s': %s\n", 
+                    cmd->args[i], strerror(errno));
+            status = 1;
+        }
+    }
+    return status;
+}
+
+// Built-in touch command
+int builtin_touch(command_t *cmd) {
+    if (cmd->argc < 2) {
+        fprintf(stderr, "touch: missing file operand\n");
+        fprintf(stderr, "Usage: touch FILE...\n");
+        return 1;
+    }
+    
+    int status = 0;
+    for (int i = 1; i < cmd->argc; i++) {
+        int fd = open(cmd->args[i], O_WRONLY | O_CREAT | O_NOCTTY | O_NONBLOCK, 0666);
+        if (fd == -1) {
+            fprintf(stderr, "touch: cannot touch '%s': %s\n", 
+                    cmd->args[i], strerror(errno));
+            status = 1;
+        } else {
+            close(fd);
+        }
+    }
+    return status;
+}
+
+// Built-in rm command
+int builtin_rm(command_t *cmd) {
+    if (cmd->argc < 2) {
+        fprintf(stderr, "rm: missing operand\n");
+        fprintf(stderr, "Usage: rm FILE...\n");
+        return 1;
+    }
+    
+    int status = 0;
+    for (int i = 1; i < cmd->argc; i++) {
+        if (unlink(cmd->args[i]) == -1) {
+            fprintf(stderr, "rm: cannot remove '%s': %s\n", 
+                    cmd->args[i], strerror(errno));
+            status = 1;
+        }
+    }
+    return status;
+}
+
+// Built-in cp command (simplified version)
+int builtin_cp(command_t *cmd) {
+    if (cmd->argc < 3) {
+        fprintf(stderr, "cp: missing file operand\n");
+        fprintf(stderr, "Usage: cp SOURCE DEST\n");
+        return 1;
+    }
+    
+    const char *src = cmd->args[1];
+    const char *dest = cmd->args[2];
+    
+    FILE *source = fopen(src, "rb");
+    if (!source) {
+        fprintf(stderr, "cp: cannot open '%s': %s\n", src, strerror(errno));
+        return 1;
+    }
+    
+    FILE *target = fopen(dest, "wb");
+    if (!target) {
+        fprintf(stderr, "cp: cannot create '%s': %s\n", dest, strerror(errno));
+        fclose(source);
+        return 1;
+    }
+    
+    char buffer[8192];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), source)) > 0) {
+        if (fwrite(buffer, 1, bytes, target) != bytes) {
+            fprintf(stderr, "cp: error writing to '%s'\n", dest);
+            fclose(source);
+            fclose(target);
+            return 1;
+        }
+    }
+    
+    fclose(source);
+    fclose(target);
+    return 0;
+}
+
+// Built-in mv command
+int builtin_mv(command_t *cmd) {
+    if (cmd->argc < 3) {
+        fprintf(stderr, "mv: missing file operand\n");
+        fprintf(stderr, "Usage: mv SOURCE DEST\n");
+        return 1;
+    }
+    
+    const char *src = cmd->args[1];
+    const char *dest = cmd->args[2];
+    
+    if (rename(src, dest) == -1) {
+        fprintf(stderr, "mv: cannot move '%s' to '%s': %s\n", 
+                src, dest, strerror(errno));
+        return 1;
+    }
+    
+    return 0;
+}

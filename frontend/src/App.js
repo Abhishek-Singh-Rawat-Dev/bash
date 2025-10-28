@@ -63,7 +63,7 @@ function App() {
     }]);
   };
 
-  const handleCommandSubmit = async (command, isVoice = false) => {
+  const handleCommandSubmit = async (command, isVoice = false, preferredExecutor = 'mini-bash') => {
     if (!command.trim()) return;
 
     setIsProcessing(true);
@@ -73,11 +73,12 @@ function App() {
       type: 'input',
       content: command,
       isVoice: isVoice,
-      directory: currentDirectory
+      directory: currentDirectory,
+      preferredExecutor: preferredExecutor
     });
 
     try {
-      const result = await executeCommand(command, isVoice);
+      const result = await executeCommand(command, isVoice, preferredExecutor);
       
       // Update current directory if changed
       if (result.current_directory) {

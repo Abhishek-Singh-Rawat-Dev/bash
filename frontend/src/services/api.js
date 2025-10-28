@@ -10,11 +10,12 @@ const api = axios.create({
   },
 });
 
-export const executeCommand = async (command, isVoice = false) => {
+export const executeCommand = async (command, isVoice = false, preferredExecutor = 'mini-bash') => {
   try {
     const response = await api.post('/api/execute', {
       command,
       is_voice: isVoice,
+      preferred_executor: preferredExecutor,
     });
     return response.data;
   } catch (error) {

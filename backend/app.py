@@ -202,6 +202,9 @@ JSON Response:"""
                 "executor": "none"
             }
         
+        # Mini-bash now supports file operations natively!
+        # No need to redirect anymore
+        
         try:
             process = subprocess.Popen(
                 [self.mini_bash_path],
@@ -214,9 +217,26 @@ JSON Response:"""
             
             stdout, stderr = process.communicate(input=f"{command}\nexit\n", timeout=10)
             
+            # Clean up mini-bash prompt output
+            output_lines = stdout.strip().split('\n')
+            cleaned_output = []
+            for line in output_lines:
+                # Skip mini-bash welcome message and prompts
+                if 'Advanced Mini Bash Shell' not in line and \
+                   'Type \'exit\' to quit' not in line and \
+                   'mini-bash:' not in line and \
+                   line.strip():
+                    cleaned_output.append(line)
+            
+            final_output = '\n'.join(cleaned_output).strip()
+            
+            # For file operations that don't produce output, add success message
+            if not final_output and command.split()[0] in ['mkdir', 'rmdir', 'touch', 'rm', 'cp', 'mv']:
+                final_output = f"✅ Command '{command}' executed successfully"
+            
             return {
                 "success": process.returncode == 0,
-                "output": stdout.strip(),
+                "output": final_output,
                 "error": stderr.strip(),
                 "executor": "mini-bash"
             }
@@ -272,7 +292,7 @@ JSON Response:"""
             }
     
     def execute_command(self, command: str, prefer_mini_bash: bool = True) -> Dict:
-        """Execute command with fallback logic"""
+        """Execute command with fallback logic or force specific executor"""
         global current_directory, feedback_log
         
         # Handle directory change
@@ -366,6 +386,7 @@ def execute_command():
     data = request.json
     user_input = data.get('command', '').strip()
     is_voice = data.get('is_voice', False)
+    preferred_executor = data.get('preferred_executor', 'mini-bash')  # 'mini-bash' or 'system-terminal'
     
     if not user_input:
         return jsonify({"error": "No command provided"}), 400
@@ -416,8 +437,9 @@ def execute_command():
                     "ai_interpretation": ai_result
                 }), 404
     
-    # Execute command
-    result = command_processor.execute_command(command)
+    # Execute command with preferred executor
+    prefer_mini_bash = (preferred_executor == 'mini-bash')
+    result = command_processor.execute_command(command, prefer_mini_bash=prefer_mini_bash)
     
     # Add to history
     history_entry = {
