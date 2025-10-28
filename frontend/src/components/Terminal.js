@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import './Terminal.css';
 
-function Terminal({ commandHistory, currentDirectory, isProcessing }) {
+function Terminal({ commandHistory, currentDirectory, isProcessing, onExampleClick }) {
   const terminalRef = useRef(null);
 
   useEffect(() => {
@@ -84,11 +84,21 @@ function Terminal({ commandHistory, currentDirectory, isProcessing }) {
             <div className="examples">
               <h3>Try these examples:</h3>
               <ul>
-                <li>"show me all python files"</li>
-                <li>"open config.json in vscode"</li>
-                <li>"go to downloads folder"</li>
-                <li>"list all files with details"</li>
-                <li>"find adi.c and open it"</li>
+                <li onClick={() => onExampleClick && onExampleClick("show me all python files")}>
+                  "show me all python files"
+                </li>
+                <li onClick={() => onExampleClick && onExampleClick("open config.json in vscode")}>
+                  "open config.json in vscode"
+                </li>
+                <li onClick={() => onExampleClick && onExampleClick("go to downloads folder")}>
+                  "go to downloads folder"
+                </li>
+                <li onClick={() => onExampleClick && onExampleClick("list all files with details")}>
+                  "list all files with details"
+                </li>
+                <li onClick={() => onExampleClick && onExampleClick("find adi.c and open it")}>
+                  "find adi.c and open it"
+                </li>
               </ul>
             </div>
           </div>

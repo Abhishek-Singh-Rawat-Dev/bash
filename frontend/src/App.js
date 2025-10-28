@@ -12,6 +12,8 @@ function App() {
   const [commandHistory, setCommandHistory] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [focusInput, setFocusInput] = useState(false);
   const [systemStatus, setSystemStatus] = useState({
     gemini_available: false,
     mini_bash_available: false
@@ -67,6 +69,7 @@ function App() {
     if (!command.trim()) return;
 
     setIsProcessing(true);
+    setInputValue(''); // Clear input after submit
     
     // Add user input to history immediately
     addToHistory({
@@ -107,6 +110,12 @@ function App() {
     }
   };
 
+  const handleExampleClick = (exampleText) => {
+    setInputValue(exampleText);
+    setFocusInput(true);
+    setTimeout(() => setFocusInput(false), 100);
+  };
+
   return (
     <div className="App">
       <Header 
@@ -123,12 +132,16 @@ function App() {
         commandHistory={commandHistory}
         currentDirectory={currentDirectory}
         isProcessing={isProcessing}
+        onExampleClick={handleExampleClick}
       />
       
       <InputBar 
         onCommandSubmit={handleCommandSubmit}
         isProcessing={isProcessing}
         currentDirectory={currentDirectory}
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        focusInput={focusInput}
       />
     </div>
   );

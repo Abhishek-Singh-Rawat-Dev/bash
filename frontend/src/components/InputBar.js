@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './InputBar.css';
 
-function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
-  const [input, setInput] = useState('');
+function InputBar({ onCommandSubmit, isProcessing, currentDirectory, inputValue, setInputValue, focusInput }) {
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [executor, setExecutor] = useState('mini-bash'); // 'mini-bash' or 'system-terminal'
   const inputRef = useRef(null);
+
+  // Focus input when focusInput prop changes
+  useEffect(() => {
+    if (focusInput && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [focusInput]);
 
   useEffect(() => {
     // Initialize speech recognition
@@ -18,7 +24,7 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
 
       recognitionInstance.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        setInput(transcript);
+        setInputValue(transcript);
         setIsRecording(false);
         // Auto-submit after voice input
         setTimeout(() => {
@@ -40,10 +46,9 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
   }, []);
 
   const handleSubmit = (commandText = null, isVoice = false) => {
-    const command = commandText || input;
+    const command = commandText || inputValue;
     if (command.trim() && !isProcessing) {
       onCommandSubmit(command, isVoice, executor);
-      setInput('');
     }
   };
 
@@ -70,7 +75,7 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
   };
 
   const handleClear = () => {
-    setInput('');
+    setInputValue('');
     inputRef.current?.focus();
   };
 
@@ -87,13 +92,13 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
           type="text"
           className="command-input"
           placeholder="Type a command in natural language... (e.g., 'show all python files')"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={isProcessing || isRecording}
         />
         
-        {input && (
+        {inputValue && (
           <button
             className="btn-clear"
             onClick={handleClear}
@@ -135,7 +140,7 @@ function InputBar({ onCommandSubmit, isProcessing, currentDirectory }) {
         <button
           className="btn-submit"
           onClick={() => handleSubmit()}
-          disabled={!input.trim() || isProcessing || isRecording}
+          disabled={!inputValue.trim() || isProcessing || isRecording}
           title="Execute command"
         >
           <span className="btn-icon">▶️</span>
