@@ -1,8 +1,0 @@
-mkdir test_minibash
-ls -la | grep test_minibash
-touch test_file.txt
-ls -la test_file.txt
-rm test_file.txt
-rmdir test_minibash
-echo "✅ All file operations working in mini-bash!"
-exit
